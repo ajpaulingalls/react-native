@@ -35,6 +35,7 @@ const {
   Platform,
   StyleSheet,
   TextInput,
+  Button,
   View,
 } = require('react-native');
 
@@ -81,9 +82,19 @@ class FlatListExample extends React.PureComponent<Props, State> {
   };
 
   _onChangeScrollToIndex = text => {
-    this._listRef
-      .getNode()
-      .scrollToIndex({viewPosition: 0.5, index: Number(text)});
+    this._listRef.scrollToIndex({
+      viewPosition: 0.5,
+      index: Number(text),
+      animated: true,
+    });
+  };
+
+  _onChangeScrollOffset = text => {
+    this._listRef.scrollToOffset({offset: Number(text), animated: false});
+  };
+
+  _onScrollToEnd = () => {
+    this._listRef.scrollToEnd({animated: false});
   };
 
   _scrollPos = new Animated.Value(0);
@@ -97,7 +108,7 @@ class FlatListExample extends React.PureComponent<Props, State> {
   );
 
   componentDidUpdate() {
-    this._listRef.getNode().recordInteraction(); // e.g. flipping logViewable switch
+    this._listRef.recordInteraction(); // e.g. flipping logViewable switch
   }
 
   render(): React.Node {
@@ -123,6 +134,13 @@ class FlatListExample extends React.PureComponent<Props, State> {
                 onChangeText={this._onChangeScrollToIndex}
                 placeholder="scrollToIndex..."
               />
+              <PlainInput
+                onChangeText={this._onChangeScrollOffset}
+                placeholder="scrollToOffset..."
+              />
+            </View>
+            <View style={styles.options}>
+              <Button onPress={this._onScrollToEnd} title={'Scroll To End'} />
             </View>
             <View style={styles.options}>
               {renderSmallSwitchOption(this, 'virtualized')}
@@ -177,6 +195,12 @@ class FlatListExample extends React.PureComponent<Props, State> {
             onScroll={
               this.state.horizontal ? this._scrollSinkX : this._scrollSinkY
             }
+            onMomentumScrollEnd={() => {
+              console.log('onMomentumScrollEnd');
+            }}
+            onMomentumScrollBegin={e => {
+              console.log('onMomentumScrollBegin', e.nativeEvent);
+            }}
             onViewableItemsChanged={this._onViewableItemsChanged}
             ref={this._captureRef}
             refreshing={false}
@@ -249,7 +273,7 @@ class FlatListExample extends React.PureComponent<Props, State> {
     }
   };
   _pressItem = (key: string) => {
-    this._listRef.getNode().recordInteraction();
+    this._listRef.recordInteraction();
     pressItem(this, key);
   };
   _listRef: React.ElementRef<typeof Animated.FlatList>;

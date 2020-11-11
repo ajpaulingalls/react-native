@@ -12,6 +12,7 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -66,6 +67,7 @@ public class ReactScrollView extends ScrollView
   private boolean mDragging;
   private boolean mPagingEnabled = false;
   private @Nullable Runnable mPostTouchRunnable;
+  private @Nullable Runnable mPostSmoothScrollRunnable;
   private boolean mRemoveClippedSubviews;
   private boolean mScrollEnabled = true;
   private boolean mSendMomentumEvents;
@@ -551,6 +553,38 @@ public class ReactScrollView extends ScrollView
     return scroller.getFinalY();
   }
 
+  public void handleSmoothScrollMomentumEvents() {
+    if (!mSendMomentumEvents || null != mPostSmoothScrollRunnable) {
+      return;
+    }
+
+    enableFpsListener();
+
+    mActivelyScrolling = false;
+    mPostSmoothScrollRunnable = new Runnable() {
+
+      @Override
+      public void run() {
+        if (mActivelyScrolling) {
+          // We are still scrolling so we just post to check again a frame later
+          mActivelyScrolling = false;
+          ViewCompat.postOnAnimationDelayed(
+            ReactScrollView.this, this, ReactScrollViewHelper.MOMENTUM_DELAY);
+        } else {
+          updateStateOnScroll(getScrollX(), getScrollY());
+
+          ReactScrollViewHelper.emitScrollMomentumEndEvent(ReactScrollView.this);
+          ReactScrollView.this.mPostSmoothScrollRunnable = null;
+          disableFpsListener();
+        }
+      }
+    };
+    ViewCompat.postOnAnimationDelayed(
+      ReactScrollView.this, mPostSmoothScrollRunnable, ReactScrollViewHelper.MOMENTUM_DELAY);
+
+  }
+
+
   /**
    * This will smooth scroll us to the nearest snap offset point It currently just looks at where
    * the content is and slides to the nearest point. It is intended to be run after we are done
@@ -775,6 +809,7 @@ public class ReactScrollView extends ScrollView
    * scroll view and state. Calling raw `smoothScrollTo` doesn't update state.
    */
   public void reactSmoothScrollTo(int x, int y) {
+    Log.d("scrollview", "here");
     smoothScrollTo(x, y);
     updateStateOnScroll(x, y);
   }

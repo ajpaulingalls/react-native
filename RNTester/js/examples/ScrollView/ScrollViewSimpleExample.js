@@ -16,8 +16,11 @@ const {
   ScrollView,
   StyleSheet,
   Text,
+  View,
+  Button,
   TouchableOpacity,
 } = require('react-native');
+const nullthrows = require('nullthrows');
 
 const NUM_ITEMS = 20;
 
@@ -38,6 +41,7 @@ class ScrollViewSimpleExample extends React.Component<{...}> {
   };
 
   render(): React.Node {
+    let _scrollView: ?React.ElementRef<typeof ScrollView>;
     // One of the items is a horizontal scroll view
     const items = this.makeItems(NUM_ITEMS, styles.itemWrapper);
     items[4] = (
@@ -62,17 +66,58 @@ class ScrollViewSimpleExample extends React.Component<{...}> {
       </ScrollView>,
     );
 
-    const verticalScrollView = (
-      <ScrollView style={styles.verticalScrollView}>{items}</ScrollView>
+    return (
+      <View style={styles.container}>
+        <ScrollView
+          ref={scrollView => {
+            _scrollView = scrollView;
+          }}
+          style={styles.verticalScrollView}
+          onMomentumScrollEnd={() => {
+            console.log('onMomentumScrollEnd');
+          }}
+          onMomentumScrollBegin={e => {
+            console.log('onMomentumScrollBegin', e.nativeEvent);
+          }}>
+          {items}
+        </ScrollView>
+        <View style={styles.options}>
+          <Button
+            title="Animated Scroll to top"
+            onPress={() => {
+              nullthrows(_scrollView).scrollTo({x: 0, animated: true});
+            }}
+            style={styles.button}
+          />
+          <Button
+            title="Animated Scroll to End"
+            onPress={() => {
+              nullthrows(_scrollView).scrollToEnd({animated: true});
+            }}
+            style={styles.button}
+            color={'blue'}
+          />
+        </View>
+      </View>
     );
-
-    return verticalScrollView;
   }
 }
 
 const styles = StyleSheet.create({
   verticalScrollView: {
     margin: 10,
+    backgroundColor: 'white',
+    flexGrow: 1,
+  },
+  options: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  container: {
+    backgroundColor: 'rgb(239, 239, 244)',
+    flex: 1,
   },
   itemWrapper: {
     backgroundColor: '#dddddd',
@@ -94,7 +139,7 @@ const styles = StyleSheet.create({
 exports.title = '<ScrollViewSimpleExample>';
 exports.description =
   'Component that enables scrolling through child components.';
-
+exports.simpleExampleContainer = true;
 exports.examples = [
   {
     title: 'Simple scroll view',
