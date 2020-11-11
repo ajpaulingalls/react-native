@@ -809,7 +809,6 @@ public class ReactScrollView extends ScrollView
    * scroll view and state. Calling raw `smoothScrollTo` doesn't update state.
    */
   public void reactSmoothScrollTo(int x, int y) {
-    Log.d("scrollview", "here");
     smoothScrollTo(x, y);
     updateStateOnScroll(x, y);
   }
